@@ -25,6 +25,15 @@ Ultimate Team tra amici, stile FC 27: carte con le foto dei giocatori, pacchetti
 5. L'admin registra le partite (risultato, convocati, gol, assist); tutti votano l'MVP.
 6. In `/formazioni` chiunque propone le squadre per la prossima partita e si vota la più equilibrata.
 
+## Da telefono (PWA)
+
+L'app è installabile come una vera app:
+
+- **iPhone**: apri il sito in Safari → Condividi → "Aggiungi alla schermata Home".
+- **Android**: Chrome propone "Installa app" (o menu ⋮ → "Aggiungi a schermata Home").
+
+Si apre a schermo intero, con icona Quadrifoglio e barra di navigazione in basso.
+
 ## Sviluppo locale
 
 ```bash
