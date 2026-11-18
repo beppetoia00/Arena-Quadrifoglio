@@ -7,6 +7,7 @@ import { PlayerForm } from "@/components/admin/PlayerForm";
 import { PlayersTable } from "@/components/admin/PlayersTable";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { DangerZone } from "@/components/admin/DangerZone";
+import { BulkImport } from "@/components/admin/BulkImport";
 import { adminLogoutAction } from "@/lib/actions";
 
 export const metadata = { title: "Admin" };
@@ -23,7 +24,7 @@ export default async function AdminPage() {
     );
   }
   const { db, rated } = await loadArena();
-  const players = db.players.map((p) => ({ ...publicPlayer(p), pin: p.pin, isAdmin: p.isAdmin ?? false, overall: rated.find((r) => r.player.id === p.id)?.overall ?? null, votes: rated.find((r) => r.player.id === p.id)?.votesCount ?? 0 }));
+  const players = db.players.map((p) => ({ ...publicPlayer(p), pin: p.pin, isAdmin: p.isAdmin ?? false, isCaptain: p.isCaptain ?? false, overall: rated.find((r) => r.player.id === p.id)?.overall ?? null, votes: rated.find((r) => r.player.id === p.id)?.votesCount ?? 0 }));
 
   return (
     <div className="space-y-8">
@@ -45,9 +46,15 @@ export default async function AdminPage() {
       )}
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <div className="card-panel">
-          <h2 className="mb-3 font-display text-xl uppercase tracking-wider">Nuovo giocatore</h2>
-          <PlayerForm />
+        <div className="space-y-6">
+          <div className="card-panel">
+            <h2 className="mb-3 font-display text-xl uppercase tracking-wider">Nuovo giocatore</h2>
+            <PlayerForm />
+          </div>
+          <div className="card-panel">
+            <h2 className="mb-1 font-display text-xl uppercase tracking-wider">Import rapido</h2>
+            <BulkImport />
+          </div>
         </div>
         <div className="card-panel">
           <h2 className="mb-3 font-display text-xl uppercase tracking-wider">

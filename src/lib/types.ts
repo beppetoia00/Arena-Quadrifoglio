@@ -23,6 +23,7 @@ export interface Player {
   /** 4-digit login PIN (shown to the admin so they can share it) */
   pin: string;
   isAdmin?: boolean;
+  isCaptain?: boolean;
   createdAt: string;
 }
 

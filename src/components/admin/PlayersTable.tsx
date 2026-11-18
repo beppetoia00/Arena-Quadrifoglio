@@ -28,7 +28,7 @@ export function PlayersTable({ players }: { players: Row[] }) {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 font-medium">
-                  {p.name} {p.nickname && <span className="text-muted">“{p.nickname}”</span>} <Crest team={p.team} size={14} /> {p.isAdmin && <span className="rounded bg-gold/20 px-1 text-[10px] text-gold">admin</span>}
+                  {p.name} {p.nickname && <span className="text-muted">“{p.nickname}”</span>} <Crest team={p.team} size={14} /> {p.isCaptain && <span className="rounded bg-teal/20 px-1 text-[10px] text-teal-light">C</span>} {p.isAdmin && <span className="rounded bg-gold/20 px-1 text-[10px] text-gold">admin</span>}
                 </div>
                 <div className="text-xs text-muted">
                   {p.position} · OVR {p.overall ?? "–"} · {p.votes} voti {showPins && <span className="ml-2 font-display text-ink">PIN {p.pin}</span>}

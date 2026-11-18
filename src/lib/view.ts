@@ -16,6 +16,7 @@ export function publicPlayer(p: Player) {
     team: p.team,
     number: p.number,
     photo: p.photo,
+    isCaptain: p.isCaptain ?? false,
   };
 }
 

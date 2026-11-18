@@ -15,6 +15,7 @@ export interface AdminPlayer {
   photo?: string;
   pin: string;
   isAdmin: boolean;
+  isCaptain?: boolean;
 }
 
 /** Downscale the chosen image client-side so uploads stay small (max 900px). */
@@ -111,9 +112,14 @@ export function PlayerForm({ player, onDone }: { player?: AdminPlayer; onDone?: 
           <label className="label">PIN (4 cifre)</label>
           <input name="pin" inputMode="numeric" pattern="\d{4}" maxLength={4} defaultValue={player?.pin ?? ""} className="input font-display tracking-[0.3em]" placeholder={player ? "" : "auto"} />
         </div>
-        <label className="flex items-end gap-2 pb-2 text-sm">
-          <input type="checkbox" name="isAdmin" value="1" defaultChecked={player?.isAdmin} className="h-4 w-4 accent-teal" /> è admin
-        </label>
+        <div className="flex flex-col justify-end gap-1 pb-1 text-sm">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="isCaptain" value="1" defaultChecked={player?.isCaptain} className="h-4 w-4 accent-teal" /> capitano
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="isAdmin" value="1" defaultChecked={player?.isAdmin} className="h-4 w-4 accent-teal" /> è admin
+          </label>
+        </div>
       </div>
       {state && !state.ok && <div className="rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-300">{state.error}</div>}
       {state && state.ok && <div className="rounded-lg bg-teal/15 px-3 py-2 text-sm text-teal-light">{state.message}</div>}

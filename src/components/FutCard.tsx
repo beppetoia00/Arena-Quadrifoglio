@@ -6,7 +6,7 @@ import { ATTR_KEYS, ATTR_LABEL } from "@/lib/rating";
 import { photoUrl } from "@/lib/photo";
 
 export interface FutCardProps {
-  player: Pick<Player, "name" | "nickname" | "position" | "team" | "photo" | "number">;
+  player: Pick<Player, "name" | "nickname" | "position" | "team" | "photo" | "number"> & { isCaptain?: boolean };
   overall: number | null;
   attrs: Attrs | null;
   tier: Tier;
@@ -162,6 +162,15 @@ export function FutCard({ player, overall, attrs, tier, width = 300, className =
           Arena Quadrifoglio
         </span>
       </div>
+      {player.isCaptain && (
+        <div
+          className="absolute flex items-center justify-center rounded-full font-display font-bold leading-none"
+          style={{ right: "4.2em", top: "4.6em", width: "2.6em", height: "2.6em", fontSize: "1em", color: t.ink, border: "0.18em solid currentColor", background: "rgba(255,255,255,0.35)" }}
+          title="Capitano"
+        >
+          <span style={{ fontSize: "1.5em" }}>C</span>
+        </div>
+      )}
       <div className="absolute" style={{ right: "4.2em", top: "2.6em" }}>
         <span className="font-display uppercase leading-none" style={{ fontSize: "0.85em", letterSpacing: "0.2em", color: t.inkSoft }}>
           {t.label}

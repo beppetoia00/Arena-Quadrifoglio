@@ -16,6 +16,7 @@ import { savePhoto } from "./storage";
 import { Attrs, Lineup, Match, MatchPlayerStat, Player, Position, POSITIONS, TeamId } from "./types";
 import { ATTR_KEYS, MAX_OVR, MIN_OVR } from "./rating";
 import { getFormation } from "./formations";
+import { parseBulkLine } from "./bulk";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
@@ -261,6 +262,7 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
   const pinInput = str(formData.get("pin"));
   if (pinInput && !/^\d{4}$/.test(pinInput)) return fail("Il PIN deve essere di 4 cifre");
   const isAdminFlag = str(formData.get("isAdmin")) === "1";
+  const isCaptain = str(formData.get("isCaptain")) === "1";
 
   let photo: string | undefined;
   const file = formData.get("photo");
@@ -279,6 +281,7 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
       existing.team = team;
       existing.number = number;
       existing.isAdmin = isAdminFlag;
+      existing.isCaptain = isCaptain;
       if (pinInput) existing.pin = pinInput;
       if (photo) existing.photo = photo;
     } else {
@@ -292,6 +295,7 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
         photo,
         pin: pinInput || randomPin(),
         isAdmin: isAdminFlag,
+        isCaptain,
         createdAt: new Date().toISOString(),
       };
       db.players.push(p);
@@ -343,6 +347,37 @@ export async function resetVotesAction(): Promise<ActionResult> {
   });
   revalidateAll();
   return ok("Voti azzerati");
+}
+
+/* ---------------- bulk import ---------------- */
+
+export async function bulkImportAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  if (!(await isAdmin())) return fail("Solo l'admin");
+  const text = str(formData.get("lines"));
+  const parsed = text.split(/\r?\n/).map(parseBulkLine).filter((x): x is NonNullable<typeof x> => Boolean(x));
+  if (!parsed.length) return fail("Nessun giocatore trovato nel testo");
+  let added = 0;
+  let skipped = 0;
+  await mutateDb((db) => {
+    for (const row of parsed) {
+      if (db.players.some((p) => p.name.toLowerCase() === row.name.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+      db.players.push({
+        id: newId("p_"),
+        name: row.name,
+        position: row.position,
+        team: row.team,
+        isCaptain: row.isCaptain,
+        pin: randomPin(),
+        createdAt: new Date().toISOString(),
+      });
+      added++;
+    }
+  });
+  revalidateAll();
+  return ok(`${added} giocatori aggiunti${skipped ? `, ${skipped} già presenti` : ""}`);
 }
 
 /* ---------------- seed demo data (admin, only when empty) ---------------- */
