@@ -71,6 +71,25 @@ export interface Lineup {
   createdAt: string;
 }
 
+export interface Transfer {
+  id: string;
+  playerId: string;
+  from: TeamId | null;
+  to: TeamId | null;
+  byId: string | null; // captain/admin player id (null = admin via PIN)
+  fee: number; // card value at the time of the transfer
+  overall: number | null;
+  note?: string;
+  createdAt: string;
+}
+
+export interface PushSub {
+  playerId: string;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  createdAt: string;
+}
+
 export interface Settings {
   goldRareMin: number;
   goldMin: number;
@@ -84,6 +103,8 @@ export interface DB {
   votes: Vote[];
   matches: Match[];
   lineups: Lineup[];
+  transfers: Transfer[];
+  pushSubs: PushSub[];
   settings: Settings;
 }
 
@@ -101,6 +122,8 @@ export function emptyDb(): DB {
     votes: [],
     matches: [],
     lineups: [],
+    transfers: [],
+    pushSubs: [],
     settings: { ...DEFAULT_SETTINGS },
   };
 }

@@ -4,7 +4,7 @@ import { Crest } from "@/components/Crest";
 import { MvpVoting } from "@/components/MvpVoting";
 import { DeleteMatchButton } from "@/components/DeleteMatchButton";
 import { loadArena, publicPlayer } from "@/lib/view";
-import { isAdmin } from "@/lib/auth";
+import { isManager } from "@/lib/auth";
 import { isPlayed, matchMvps } from "@/lib/stats";
 import { avgOverall } from "@/lib/rating";
 import { TEAM_LABEL, TeamId } from "@/lib/types";
@@ -13,7 +13,7 @@ import { photoUrl } from "@/lib/photo";
 export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { db, me, ratedById } = await loadArena();
-  const admin = await isAdmin();
+  const admin = await isManager();
   const m = db.matches.find((x) => x.id === id);
   if (!m) notFound();
   const played = isPlayed(m);

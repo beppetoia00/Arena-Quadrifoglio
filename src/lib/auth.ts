@@ -88,3 +88,10 @@ export async function isAdmin(): Promise<boolean> {
   const me = await currentPlayer();
   return Boolean(me?.isAdmin);
 }
+
+/** Admin (PIN or flag) or one of the team captains: can manage matches and transfers. */
+export async function isManager(): Promise<boolean> {
+  if (await isAdmin()) return true;
+  const me = await currentPlayer();
+  return Boolean(me?.isCaptain);
+}

@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { MatchForm } from "@/components/MatchForm";
-import { isAdmin } from "@/lib/auth";
+import { isManager } from "@/lib/auth";
 import { loadArena, publicPlayer } from "@/lib/view";
 
 export const metadata = { title: "Nuova partita" };
 
 export default async function NuovaPartita({ searchParams }: { searchParams: Promise<{ lineup?: string }> }) {
-  if (!(await isAdmin())) redirect("/admin");
+  if (!(await isManager())) redirect("/partite");
   const { lineup: lineupId } = await searchParams;
   const { db, ratedById } = await loadArena();
   const lineup = lineupId ? db.lineups.find((l) => l.id === lineupId) : undefined;

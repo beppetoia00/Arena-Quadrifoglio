@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { loadArena } from "@/lib/view";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin, isManager } from "@/lib/auth";
 import { getFormation } from "@/lib/formations";
 import { LineupCard } from "@/components/LineupCard";
 import { LineupPlayer } from "@/components/Pitch";
@@ -9,7 +9,7 @@ export const metadata = { title: "Formazioni" };
 
 export default async function FormazioniPage() {
   const { db, me, ratedById } = await loadArena();
-  const admin = await isAdmin();
+  const [admin, manager] = await Promise.all([isAdmin(), isManager()]);
   const byId = new Map(db.players.map((p) => [p.id, p]));
   const toLP = (ids: (string | null)[]): (LineupPlayer | null)[] =>
     ids.map((id) => {
@@ -43,7 +43,7 @@ export default async function FormazioniPage() {
             players={{ blacks: toLP(l.slots.blacks), blancos: toLP(l.slots.blancos) }}
             meId={me?.id ?? null}
             canDelete={admin || l.authorId === me?.id}
-            admin={admin}
+            admin={manager}
           />
         ))}
       </div>

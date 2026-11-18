@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { FutCard } from "@/components/FutCard";
 import { Crest } from "@/components/Crest";
-import { loadArena, publicPlayer } from "@/lib/view";
+import { loadArena, nextConvocation, publicPlayer } from "@/lib/view";
+import { ConvocationCard } from "@/components/ConvocationCard";
 import { formatValue, avgOverall } from "@/lib/rating";
 import { isPlayed, teamRecords, matchMvps } from "@/lib/stats";
 import { TEAM_LABEL } from "@/lib/types";
@@ -20,8 +21,12 @@ export default async function Home() {
   const topScorer = [...stats.values()].sort((a, b) => b.goals - a.goals)[0];
   const mvpKing = [...stats.values()].sort((a, b) => b.mvps - a.mvps)[0];
 
+  const conv = me ? nextConvocation(db, me.id) : null;
+  const lastTransfer = db.transfers[0];
+
   return (
     <div className="space-y-10">
+      {conv && <ConvocationCard c={conv} name={me!.name} />}
       {/* hero */}
       <section className="relative overflow-hidden rounded-3xl border border-line bg-surface/50 px-6 py-10 text-center md:py-14">
         <div className="rays absolute left-1/2 top-1/2 -z-0 h-[1400px] w-[1400px] -translate-x-1/2 -translate-y-1/2 opacity-[0.12]" />
@@ -152,6 +157,15 @@ export default async function Home() {
           )}
         </div>
         <div className="card-panel space-y-3">
+          {lastTransfer && (
+            <Link href="/mercato" className="block">
+              <div className="text-[10px] uppercase tracking-[0.25em] text-muted">Calciomercato</div>
+              <div className="font-display text-xl">
+                {db.players.find((p) => p.id === lastTransfer.playerId)?.name ?? "?"} → {lastTransfer.to ? TEAM_LABEL[lastTransfer.to] : "svincolato"}
+              </div>
+              <div className="text-xs text-gold">{formatValue(lastTransfer.fee)} crediti</div>
+            </Link>
+          )}
           <King label="Capocannoniere" name={topScorer && topScorer.goals > 0 ? db.players.find((p) => p.id === topScorer.playerId)?.name : undefined} value={topScorer?.goals ? `${topScorer.goals} gol` : undefined} />
           <King label="Re degli MVP" name={mvpKing && mvpKing.mvps > 0 ? db.players.find((p) => p.id === mvpKing.playerId)?.name : undefined} value={mvpKing?.mvps ? `${mvpKing.mvps} MVP` : undefined} />
         </div>

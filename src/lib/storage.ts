@@ -150,6 +150,8 @@ function normalize(raw: Partial<DB>): DB {
     votes: raw.votes ?? [],
     matches: raw.matches ?? [],
     lineups: raw.lineups ?? [],
+    transfers: raw.transfers ?? [],
+    pushSubs: raw.pushSubs ?? [],
     settings: { ...base.settings, ...(raw.settings ?? {}) },
   };
 }

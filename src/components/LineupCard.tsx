@@ -74,7 +74,7 @@ export function LineupCard({
       <div className="flex justify-end gap-2 text-xs">
         {admin && (
           <Link href={`/partite/nuova?lineup=${lineup.id}`} className="btn-ghost !py-1 !text-xs">
-            Crea partita da qui
+            Crea partita ufficiale da qui
           </Link>
         )}
         {canDelete && (

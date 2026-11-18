@@ -9,14 +9,16 @@ import {
   clearSession,
   currentPlayer,
   isAdmin,
+  isManager,
   setAdmin,
   setSession,
 } from "./auth";
 import { savePhoto } from "./storage";
-import { Attrs, DB, Lineup, Match, MatchPlayerStat, Player, Position, POSITIONS, TeamId } from "./types";
-import { ATTR_KEYS, MAX_OVR, MIN_OVR } from "./rating";
+import { Attrs, DB, Lineup, Match, MatchPlayerStat, Player, Position, POSITIONS, TEAM_LABEL, TeamId, Transfer } from "./types";
+import { ATTR_KEYS, formatValue, MAX_OVR, MIN_OVR, ratePlayer } from "./rating";
 import { getFormation } from "./formations";
 import { parseBulkLine } from "./bulk";
+import { notifyPlayers } from "./push";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
@@ -203,7 +205,7 @@ export async function voteMvpAction(matchId: string, playerId: string): Promise<
 }
 
 export async function saveMatchAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  if (!(await isAdmin())) return fail("Solo l'admin può salvare le partite");
+  if (!(await isManager())) return fail("Solo l'admin o i capitani possono salvare le partite");
   const id = str(formData.get("id"));
   const date = str(formData.get("date")) || new Date().toISOString().slice(0, 10);
   const title = str(formData.get("title"));
@@ -220,11 +222,18 @@ export async function saveMatchAction(_prev: ActionResult | null, formData: Form
     if (goals || assists) stats.push({ playerId: pid, goals: Math.max(0, goals), assists: Math.max(0, assists) });
   }
   let savedId = id;
+  let isNew = false;
+  let lineupChanged = false;
+  const snap: { db: DB | null } = { db: null };
   const mErr = await tryMutate((db) => {
+    snap.db = db;
     const existing = id ? db.matches.find((m) => m.id === id) : undefined;
     if (existing) {
+      const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+      lineupChanged = !same(existing.blacks, blacks) || !same(existing.blancos, blancos);
       Object.assign(existing, { date, title, notes, blacksScore, blancosScore, blacks, blancos, stats });
     } else {
+      isNew = true;
       const m: Match = {
         id: newId("m_"),
         date,
@@ -244,12 +253,26 @@ export async function saveMatchAction(_prev: ActionResult | null, formData: Form
     db.matches.sort((a, b) => b.date.localeCompare(a.date));
   });
   if (mErr) return fail(mErr);
+  if (snap.db && (isNew || lineupChanged)) {
+    const when = new Date(date + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+    const label = title ? `${title} (${when})` : `Partita di ${when}`;
+    await notifyPlayers(snap.db, (p) => {
+      const inBlacks = blacks.includes(p.id);
+      const inBlancos = blancos.includes(p.id);
+      const body = inBlacks
+        ? `${label}: sei convocato con i BLACKS ⚫`
+        : inBlancos
+          ? `${label}: sei convocato con i BLANCOS ⚪`
+          : `${label}: formazioni confermate, non sei tra i convocati.`;
+      return { title: isNew ? "Nuova partita! ⚽" : "Formazioni aggiornate", body, url: `/partite/${savedId}`, tag: `match-${savedId}` };
+    }).catch(() => undefined);
+  }
   revalidateAll();
   redirect(`/partite/${savedId}`);
 }
 
 export async function deleteMatchAction(matchId: string): Promise<ActionResult> {
-  if (!(await isAdmin())) return fail("Solo l'admin");
+  if (!(await isManager())) return fail("Solo l'admin o i capitani");
   const mErr = await tryMutate((db) => {
     db.matches = db.matches.filter((m) => m.id !== matchId);
   });
@@ -405,6 +428,91 @@ export async function bulkImportAction(_prev: ActionResult | null, formData: For
   return ok(`${added} giocatori aggiunti, ${updated} aggiornati`);
 }
 
+/* ---------------- calciomercato ---------------- */
+
+export async function transferPlayerAction(input: { playerId: string; to: TeamId | null; note?: string }): Promise<ActionResult & { transfer?: Transfer }> {
+  if (!(await isManager())) return fail("Solo l'admin e i capitani possono fare trasferimenti");
+  const me = await currentPlayer();
+  const to: TeamId | null = input.to === "blacks" || input.to === "blancos" ? input.to : null;
+  let transfer: Transfer | undefined;
+  const snap: { db: DB | null } = { db: null };
+  const mErr = await tryMutate((db) => {
+    const player = db.players.find((p) => p.id === input.playerId);
+    if (!player) throw new Error("Giocatore non trovato");
+    if (player.team === to) throw new Error(`${player.name} è già ${to ? "nei " + TEAM_LABEL[to] : "svincolato"}`);
+    const rated = ratePlayer(player, db.votes, db.settings);
+    transfer = {
+      id: newId("t_"),
+      playerId: player.id,
+      from: player.team,
+      to,
+      byId: me?.id ?? null,
+      fee: rated.value,
+      overall: rated.overall,
+      note: input.note?.trim().slice(0, 140) || undefined,
+      createdAt: new Date().toISOString(),
+    };
+    player.team = to;
+    db.transfers.unshift(transfer);
+    snap.db = db;
+  });
+  if (mErr) return fail(mErr);
+  const done = transfer as Transfer | undefined;
+  if (snap.db && done) {
+    const t = done;
+    const name = snap.db.players.find((p) => p.id === t.playerId)?.name ?? "Un giocatore";
+    const dest = t.to ? `passa ai ${TEAM_LABEL[t.to]}` : "resta svincolato";
+    await notifyPlayers(snap.db, (p) => ({
+      title: "Calciomercato 🔁",
+      body: p.id === t.playerId ? `UFFICIALE: ${dest.replace("passa", "passi")}! Ti hanno pagato ${formatValue(t.fee)} crediti.` : `UFFICIALE: ${name} ${dest} per ${formatValue(t.fee)} crediti.`,
+      url: "/mercato",
+      tag: `transfer-${t.id}`,
+    })).catch(() => undefined);
+  }
+  revalidateAll();
+  return { ok: true, transfer };
+}
+
+export async function deleteTransferAction(transferId: string): Promise<ActionResult> {
+  if (!(await isAdmin())) return fail("Solo l'admin può cancellare uno storico");
+  const mErr = await tryMutate((db) => {
+    db.transfers = db.transfers.filter((t) => t.id !== transferId);
+  });
+  if (mErr) return fail(mErr);
+  revalidateAll();
+  return ok();
+}
+
+/* ---------------- push notifications ---------------- */
+
+export async function subscribePushAction(sub: { endpoint: string; keys: { p256dh: string; auth: string } }): Promise<ActionResult> {
+  const me = await currentPlayer();
+  if (!me) return fail("Entra per attivare le notifiche");
+  if (!sub?.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) return fail("Sottoscrizione non valida");
+  const mErr = await tryMutate((db) => {
+    db.pushSubs = (db.pushSubs ?? []).filter((s) => s.endpoint !== sub.endpoint);
+    db.pushSubs.push({ playerId: me.id, endpoint: sub.endpoint, keys: sub.keys, createdAt: new Date().toISOString() });
+  });
+  if (mErr) return fail(mErr);
+  return ok("Notifiche attivate");
+}
+
+export async function unsubscribePushAction(endpoint: string): Promise<ActionResult> {
+  const mErr = await tryMutate((db) => {
+    db.pushSubs = (db.pushSubs ?? []).filter((s) => s.endpoint !== endpoint);
+  });
+  if (mErr) return fail(mErr);
+  return ok("Notifiche disattivate");
+}
+
+export async function testPushAction(): Promise<ActionResult> {
+  const me = await currentPlayer();
+  if (!me) return fail("Entra prima");
+  const db = await getDb();
+  const res = await notifyPlayers(db, (p) => (p.id === me.id ? { title: "Arena Quadrifoglio", body: "Notifiche attive! Ti avviseremo per partite e mercato. ⚽", url: "/" } : null));
+  return res.sent ? ok("Notifica di prova inviata") : fail("Nessuna notifica inviata: attiva le notifiche su questo dispositivo");
+}
+
 /* ---------------- seed demo data (admin, only when empty) ---------------- */
 
 export async function seedDemoAction(): Promise<ActionResult> {
@@ -428,6 +536,7 @@ export async function seedDemoAction(): Promise<ActionResult> {
       team: d.team,
       number: i + 1,
       pin: "1234",
+      isCaptain: i === 0 || i === 4,
       createdAt: new Date().toISOString(),
     }));
     const ids = db.players.map((p) => p.id);

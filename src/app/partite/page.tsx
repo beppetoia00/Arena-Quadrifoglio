@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Crest } from "@/components/Crest";
 import { loadArena } from "@/lib/view";
-import { isAdmin } from "@/lib/auth";
+import { isManager } from "@/lib/auth";
 import { isPlayed, matchMvps } from "@/lib/stats";
 
 export const metadata = { title: "Partite" };
 
 export default async function PartitePage() {
   const { db } = await loadArena();
-  const admin = await isAdmin();
+  const admin = await isManager();
   const byId = new Map(db.players.map((p) => [p.id, p]));
 
   return (
@@ -26,7 +26,7 @@ export default async function PartitePage() {
       </div>
 
       {db.matches.length === 0 && (
-        <div className="card-panel text-muted">Nessuna partita ancora. {admin ? "Creane una!" : "L'admin può registrare le partite."}</div>
+        <div className="card-panel text-muted">Nessuna partita ancora. {admin ? "Creane una!" : "L'admin e i capitani possono registrare le partite."}</div>
       )}
 
       <div className="space-y-3">

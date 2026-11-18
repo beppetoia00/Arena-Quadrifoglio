@@ -1,10 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { MatchForm } from "@/components/MatchForm";
-import { isAdmin } from "@/lib/auth";
+import { isManager } from "@/lib/auth";
 import { loadArena, publicPlayer } from "@/lib/view";
 
 export default async function ModificaPartita({ params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAdmin())) redirect("/admin");
+  if (!(await isManager())) redirect("/partite");
   const { id } = await params;
   const { db, ratedById } = await loadArena();
   const match = db.matches.find((m) => m.id === id);
