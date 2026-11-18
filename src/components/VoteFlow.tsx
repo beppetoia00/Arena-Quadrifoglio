@@ -148,7 +148,19 @@ function PackOpening({
       const t = setTimeout(() => setPhase("reveal"), 2600);
       return () => clearTimeout(t);
     }
+    if (phase === "rate") {
+      const t = setTimeout(() => {
+        const el = document.getElementById("rate-panel");
+        if (el && window.innerWidth < 768) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 350);
+      return () => clearTimeout(t);
+    }
     if (phase === "reveal") {
+      try {
+        navigator.vibrate?.([30, 40, 80]);
+      } catch {
+        /* ignore */
+      }
       confetti({ particleCount: 140, spread: 80, startVelocity: 45, origin: { y: 0.55 }, colors: ["#e9c55b", "#ffffff", "#009992", "#fff1a8"] });
       const t = setTimeout(() => setPhase("rate"), 1400);
       return () => clearTimeout(t);
@@ -176,7 +188,7 @@ function PackOpening({
   const walkoutTier: Tier = card.overall != null ? card.tier : "gold";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-line bg-surface/40" style={{ minHeight: 560 }}>
+    <div className="relative overflow-hidden rounded-3xl border border-line bg-surface/40" style={{ minHeight: 520 }}>
       {/* backdrop rays during walkout/reveal */}
       <AnimatePresence>
         {(phase === "walkout" || phase === "reveal") && (
@@ -187,7 +199,7 @@ function PackOpening({
         )}
       </AnimatePresence>
 
-      <div className="relative flex flex-col items-center px-4 py-8">
+      <div className="relative flex flex-col items-center px-3 py-6 md:px-4 md:py-8">
         <div className="mb-4 text-center">
           <div className="font-display text-xs uppercase tracking-[0.35em] text-muted">
             {revote ? "Cambia il tuo voto" : phase === "pack" ? "Pacchetto giocatore" : phase === "rate" || phase === "saved" ? "Dai il tuo voto" : "Sbustando..."}
@@ -213,7 +225,19 @@ function PackOpening({
               exit={{ opacity: 0, scale: 1.8, filter: "brightness(4)" }}
               transition={phase === "opening" ? { duration: 1.1, ease: "easeInOut" } : { duration: 0.4 }}
             >
-              <button onClick={() => phase === "pack" && setPhase("opening")} className="group relative outline-none" aria-label="Apri il pacchetto">
+              <button
+                onClick={() => {
+                  if (phase !== "pack") return;
+                  try {
+                    navigator.vibrate?.(20);
+                  } catch {
+                    /* ignore */
+                  }
+                  setPhase("opening");
+                }}
+                className="group relative outline-none"
+                aria-label="Apri il pacchetto"
+              >
                 <Pack />
                 <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-teal/30 blur-3xl animate-pulse-glow" />
               </button>
@@ -260,7 +284,7 @@ function PackOpening({
               </motion.div>
 
               {(phase === "rate" || phase === "saved") && (
-                <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-md">
+                <motion.div id="rate-panel" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-md scroll-mt-20">
                   {phase === "rate" ? (
                     <div className="card-panel space-y-5">
                       <div>

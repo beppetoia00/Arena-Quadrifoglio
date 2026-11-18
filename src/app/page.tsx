@@ -129,16 +129,16 @@ export default async function Home() {
         <div className="card-panel md:col-span-2">
           <div className="mb-2 font-display text-sm uppercase tracking-[0.3em] text-muted">Ultima partita</div>
           {lastMatch ? (
-            <Link href={`/partite/${lastMatch.id}`} className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <Link href={`/partite/${lastMatch.id}`} className="flex items-center justify-between gap-3">
+              <div className="flex flex-col items-center gap-1 sm:flex-row sm:gap-3">
                 <Crest team="blacks" size={56} />
-                <span className="font-display text-2xl uppercase">Blacks</span>
+                <span className="font-display text-lg uppercase sm:text-2xl">Blacks</span>
               </div>
-              <div className="font-display text-5xl font-bold">
+              <div className="whitespace-nowrap font-display text-5xl font-bold">
                 {lastMatch.blacksScore} <span className="text-muted">:</span> {lastMatch.blancosScore}
               </div>
-              <div className="flex items-center gap-3">
-                <span className="font-display text-2xl uppercase">Blancos</span>
+              <div className="flex flex-col-reverse items-center gap-1 sm:flex-row sm:gap-3">
+                <span className="font-display text-lg uppercase sm:text-2xl">Blancos</span>
                 <Crest team="blancos" size={56} />
               </div>
             </Link>

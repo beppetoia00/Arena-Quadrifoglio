@@ -357,17 +357,21 @@ export async function bulkImportAction(_prev: ActionResult | null, formData: For
   const parsed = text.split(/\r?\n/).map(parseBulkLine).filter((x): x is NonNullable<typeof x> => Boolean(x));
   if (!parsed.length) return fail("Nessun giocatore trovato nel testo");
   let added = 0;
-  let skipped = 0;
+  let updated = 0;
   await mutateDb((db) => {
     for (const row of parsed) {
-      if (db.players.some((p) => p.name.toLowerCase() === row.name.toLowerCase())) {
-        skipped++;
+      const existing = db.players.find((p) => p.name.toLowerCase() === row.name.toLowerCase());
+      if (existing) {
+        if (row.position) existing.position = row.position;
+        if (row.team) existing.team = row.team;
+        if (row.isCaptain) existing.isCaptain = true;
+        updated++;
         continue;
       }
       db.players.push({
         id: newId("p_"),
         name: row.name,
-        position: row.position,
+        position: row.position ?? "CEN",
         team: row.team,
         isCaptain: row.isCaptain,
         pin: randomPin(),
@@ -377,7 +381,7 @@ export async function bulkImportAction(_prev: ActionResult | null, formData: For
     }
   });
   revalidateAll();
-  return ok(`${added} giocatori aggiunti${skipped ? `, ${skipped} già presenti` : ""}`);
+  return ok(`${added} giocatori aggiunti, ${updated} aggiornati`);
 }
 
 /* ---------------- seed demo data (admin, only when empty) ---------------- */

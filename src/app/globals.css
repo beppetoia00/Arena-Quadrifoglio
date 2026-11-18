@@ -43,6 +43,54 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* app-like spacing: room for the bottom tab bar + iPhone home indicator */
+.app-main {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) {
+  .app-main {
+    padding-bottom: 2.5rem;
+  }
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 16px on touch devices avoids the iOS auto-zoom on focus */
+@media (max-width: 767px) {
+  .input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  input,
+  textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
 }
 
 body {

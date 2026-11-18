@@ -9,11 +9,11 @@ const POS_WORDS: Record<string, Position> = {
 };
 const CAPTAIN_WORDS = new Set(["capitano", "cap", "c", "captain"]);
 
-export function parseBulkLine(line: string): { name: string; team: TeamId | null; position: Position; isCaptain: boolean } | null {
+export function parseBulkLine(line: string): { name: string; team: TeamId | null; position: Position | null; isCaptain: boolean } | null {
   const tokens = line.replace(/[,;|]/g, " ").split(/\s+/).filter(Boolean);
   if (!tokens.length) return null;
   let team: TeamId | null = null;
-  let position: Position = "CEN";
+  let position: Position | null = null;
   let isCaptain = false;
   const nameParts: string[] = [];
   for (const t of tokens) {

@@ -60,7 +60,7 @@ export function LineupCard({
 
       <BalanceBar balance={balance} />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <div className="mb-1 text-center text-[10px] uppercase tracking-widest text-muted">Blacks · {formations.blacks.label.split(" ")[0]}</div>
           <Pitch team="blacks" formation={formations.blacks} players={players.blacks} compact />

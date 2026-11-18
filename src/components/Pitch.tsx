@@ -41,7 +41,7 @@ export function Pitch({
   compact?: boolean;
 }) {
   return (
-    <div className={`pitch-grass relative w-full overflow-hidden rounded-2xl border-2 border-white/20 ${compact ? "aspect-[4/5]" : "aspect-[3/4]"}`}>
+    <div className={`pitch-grass relative w-full overflow-hidden rounded-2xl border-2 border-white/20 ${compact ? "aspect-[4/5] sm:aspect-[4/5]" : "aspect-[3/4]"}`}>
       {/* pitch lines */}
       <div className="pointer-events-none absolute inset-3 rounded-sm border border-white/30" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30" />
@@ -84,7 +84,7 @@ export function Pitch({
                 <span className="absolute -right-1 -top-1 rounded-full bg-gold px-1 font-display text-[10px] font-bold text-black shadow">{p.overall}</span>
               )}
             </div>
-            <span className="mt-1 max-w-[72px] truncate rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">{p ? p.name : slot.role}</span>
+            <span className={`mt-1 truncate rounded bg-black/60 px-1.5 py-0.5 font-semibold text-white ${compact ? "max-w-[64px] text-[9px]" : "max-w-[72px] text-[10px]"}`}>{p ? p.name : slot.role}</span>
           </button>
         );
       })}
