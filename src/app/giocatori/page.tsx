@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { FutCard } from "@/components/FutCard";
 import { loadArena, publicPlayer } from "@/lib/view";
-import { formatValue, TIER_LABEL } from "@/lib/rating";
+import { formatValue, TIER_LABEL, TIER_ORDER, tierMetal } from "@/lib/rating";
 import { Tier } from "@/lib/types";
 
 export const metadata = { title: "Carte" };
 
 export default async function GiocatoriPage() {
   const { rated } = await loadArena();
-  const groups: Record<Tier, typeof rated> = { "gold-rare": [], gold: [], "silver-rare": [] };
+  const groups: Record<Tier, typeof rated> = { "gold-rare": [], gold: [], "silver-rare": [], silver: [], "bronze-rare": [], bronze: [] };
   for (const r of rated) groups[r.tier].push(r);
   const unrated = rated.filter((r) => r.overall == null);
 
@@ -19,12 +19,12 @@ export default async function GiocatoriPage() {
         <p className="text-muted">{rated.length} giocatori · ordinati per overall</p>
       </div>
 
-      {(["gold-rare", "gold", "silver-rare"] as Tier[]).map((tier) => {
+      {TIER_ORDER.map((tier) => {
         const list = groups[tier].filter((r) => r.overall != null);
         if (!list.length) return null;
         return (
           <section key={tier}>
-            <h2 className={`mb-3 font-display text-xl uppercase tracking-[0.2em] ${tier === "silver-rare" ? "text-silver" : "text-gold"}`}>
+            <h2 className={`mb-3 font-display text-xl uppercase tracking-[0.2em] ${tierMetal(tier) === "silver" ? "text-silver" : tierMetal(tier) === "bronze" ? "text-[#d49a62]" : "text-gold"}`}>
               {TIER_LABEL[tier]} <span className="text-muted">({list.length})</span>
             </h2>
             <Grid list={list} />

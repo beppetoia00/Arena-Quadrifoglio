@@ -6,7 +6,7 @@ import confetti from "canvas-confetti";
 import { FutCard } from "./FutCard";
 import { Pack } from "./Pack";
 import { Attrs, Position, Settings, TeamId, Tier } from "@/lib/types";
-import { ATTR_KEYS, ATTR_LABEL, attrsFromOverall, cardValue, formatValue, MAX_OVR, MIN_OVR, TIER_LABEL, tierFor } from "@/lib/rating";
+import { ATTR_KEYS, ATTR_LABEL, attrsFromOverall, cardValue, formatValue, MAX_OVR, MIN_OVR, METAL_LABEL, TIER_LABEL, tierFor, tierMetal } from "@/lib/rating";
 import { submitVoteAction } from "@/lib/actions";
 
 export interface VoteCard {
@@ -29,6 +29,9 @@ const TIER_FLARE: Record<Tier, string> = {
   "gold-rare": "radial-gradient(circle, rgba(255,230,140,0.95) 0%, rgba(233,197,91,0.5) 35%, transparent 70%)",
   gold: "radial-gradient(circle, rgba(240,210,120,0.9) 0%, rgba(200,160,60,0.45) 35%, transparent 70%)",
   "silver-rare": "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(200,210,220,0.5) 35%, transparent 70%)",
+  silver: "radial-gradient(circle, rgba(240,243,246,0.9) 0%, rgba(180,190,200,0.45) 35%, transparent 70%)",
+  "bronze-rare": "radial-gradient(circle, rgba(243,207,168,0.95) 0%, rgba(212,154,98,0.5) 35%, transparent 70%)",
+  bronze: "radial-gradient(circle, rgba(220,180,140,0.9) 0%, rgba(191,135,87,0.45) 35%, transparent 70%)",
 };
 
 export function VoteFlow({
@@ -313,7 +316,8 @@ function PackOpening({
                         onChange={(e) => changeOverall(Number(e.target.value))}
                       />
                       <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted">
-                        <span>Argento</span>
+                        <span>Bronzo</span>
+                        <span>Argento ≥ {settings.silverMin}</span>
                         <span>Oro ≥ {settings.goldMin}</span>
                         <span>Oro rara ≥ {settings.goldRareMin}</span>
                       </div>
@@ -412,7 +416,7 @@ function Walkout({ card, tier }: { card: VoteCard; tier: Tier }) {
       delay: 1.7,
       node: (
         <div className="font-display text-2xl uppercase tracking-[0.4em] text-white text-shadow">
-          {tier === "silver-rare" ? "Argento" : "Oro"}
+          {METAL_LABEL[tierMetal(tier)]}{tier.endsWith("-rare") ? " Rara" : ""}
         </div>
       ),
     },

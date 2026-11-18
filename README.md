@@ -21,7 +21,7 @@ Ultimate Team tra amici, stile FC 27: carte con le foto dei giocatori, pacchetti
 1. L'admin (`/admin`) aggiunge i giocatori con foto, ruolo, squadra e PIN.
 2. Ogni amico entra da `/login` scegliendo la sua carta + PIN.
 3. In `/vota` si sbustano i pacchetti: appare la carta dell'amico e si dà l'overall (40–99).
-4. L'overall della carta è la media dei voti ricevuti: ≥ 80 **Oro Rara**, ≥ 70 **Oro**, sotto **Argento Rara** (soglie modificabili dall'admin). Il valore della carta cresce in modo esponenziale con l'overall.
+4. L'overall della carta è la media dei voti ricevuti: ≥ 80 **Oro Rara**, ≥ 70 **Oro**, ≥ 65 **Argento Rara**, ≥ 60 **Argento**, ≥ 55 **Bronzo Rara**, sotto **Bronzo** (soglie modificabili dall'admin). Il valore della carta cresce in modo esponenziale con l'overall.
 5. L'admin registra le partite (risultato, convocati, gol, assist); tutti votano l'MVP.
 6. In `/formazioni` chiunque propone le squadre per la prossima partita e si vota la più equilibrata.
 

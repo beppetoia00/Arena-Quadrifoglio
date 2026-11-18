@@ -371,11 +371,15 @@ export async function saveSettingsAction(_prev: ActionResult | null, formData: F
   if (!(await isAdmin())) return fail("Solo l'admin");
   const goldRareMin = num(formData.get("goldRareMin"), 80);
   const goldMin = num(formData.get("goldMin"), 70);
-  if (goldMin >= goldRareMin) return fail("La soglia Oro deve essere minore della soglia Oro Rara");
+  const silverRareMin = num(formData.get("silverRareMin"), 65);
+  const silverMin = num(formData.get("silverMin"), 60);
+  const bronzeRareMin = num(formData.get("bronzeRareMin"), 55);
+  if (!(goldRareMin > goldMin && goldMin > silverRareMin && silverRareMin > silverMin && silverMin > bronzeRareMin))
+    return fail("Le soglie devono essere decrescenti: Oro Rara > Oro > Argento Rara > Argento > Bronzo Rara");
   const votingOpen = str(formData.get("votingOpen")) === "1";
   const seasonName = str(formData.get("seasonName")) || "Stagione";
   const mErr = await tryMutate((db) => {
-    db.settings = { goldRareMin, goldMin, votingOpen, seasonName };
+    db.settings = { goldRareMin, goldMin, silverRareMin, silverMin, bronzeRareMin, votingOpen, seasonName };
   });
   if (mErr) return fail(mErr);
   revalidateAll();

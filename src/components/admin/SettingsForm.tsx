@@ -12,7 +12,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         <label className="label">Nome stagione</label>
         <input name="seasonName" defaultValue={settings.seasonName} className="input" />
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <div>
           <label className="label">Oro rara da OVR</label>
           <input name="goldRareMin" type="number" min={41} max={99} defaultValue={settings.goldRareMin} className="input" />
@@ -21,8 +21,20 @@ export function SettingsForm({ settings }: { settings: Settings }) {
           <label className="label">Oro da OVR</label>
           <input name="goldMin" type="number" min={40} max={98} defaultValue={settings.goldMin} className="input" />
         </div>
+        <div>
+          <label className="label">Argento rara da OVR</label>
+          <input name="silverRareMin" type="number" min={40} max={97} defaultValue={settings.silverRareMin} className="input" />
+        </div>
+        <div>
+          <label className="label">Argento da OVR</label>
+          <input name="silverMin" type="number" min={40} max={96} defaultValue={settings.silverMin} className="input" />
+        </div>
+        <div>
+          <label className="label">Bronzo rara da OVR</label>
+          <input name="bronzeRareMin" type="number" min={40} max={95} defaultValue={settings.bronzeRareMin} className="input" />
+        </div>
       </div>
-      <p className="text-[11px] text-muted">Sotto la soglia Oro la carta è Argento Rara.</p>
+      <p className="text-[11px] text-muted">Sotto la soglia Bronzo Rara la carta è Bronzo.</p>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="votingOpen" value="1" defaultChecked={settings.votingOpen} className="h-4 w-4 accent-teal" /> Votazioni aperte
       </label>

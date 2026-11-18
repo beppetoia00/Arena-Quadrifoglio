@@ -45,6 +45,30 @@ const THEMES: Record<
     sheen: "rgba(255,255,255,0.65)",
     label: "ARGENTO RARA",
   },
+  silver: {
+    stops: ["#eef1f4", "#cfd5db", "#a3acb6", "#66707b"],
+    ink: "#1f252d",
+    inkSoft: "rgba(31,37,45,0.7)",
+    edge: "#3f4852",
+    sheen: "rgba(255,255,255,0.35)",
+    label: "ARGENTO",
+  },
+  "bronze-rare": {
+    stops: ["#f3cfa8", "#d49a62", "#a9672f", "#5e3512"],
+    ink: "#2a1606",
+    inkSoft: "rgba(42,22,6,0.72)",
+    edge: "#4a2a0e",
+    sheen: "rgba(255,255,255,0.5)",
+    label: "BRONZO RARA",
+  },
+  bronze: {
+    stops: ["#dcb48c", "#bf8757", "#95592a", "#573012"],
+    ink: "#2a1606",
+    inkSoft: "rgba(42,22,6,0.7)",
+    edge: "#4a2a0e",
+    sheen: "rgba(255,255,255,0.28)",
+    label: "BRONZO",
+  },
 };
 
 export const CARD_PATH =
@@ -62,7 +86,7 @@ export function FutCard({ player, overall, attrs, tier, width = 300, className =
   return (
     <div
       className={`relative select-none ${className}`}
-      style={{ width, height, fontSize: em, filter: glow ? `drop-shadow(0 0 ${em * 2.2}px ${tier === "silver-rare" ? "rgba(220,230,240,0.55)" : "rgba(255,215,90,0.6)"})` : undefined }}
+      style={{ width, height, fontSize: em, filter: glow ? `drop-shadow(0 0 ${em * 2.2}px ${tier.startsWith("silver") ? "rgba(220,230,240,0.55)" : tier.startsWith("bronze") ? "rgba(212,154,98,0.6)" : "rgba(255,215,90,0.6)"})` : undefined }}
     >
       <svg viewBox="0 0 300 440" className="absolute inset-0 h-full w-full" aria-hidden>
         <defs>

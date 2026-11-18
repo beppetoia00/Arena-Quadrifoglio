@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Crest } from "@/components/Crest";
 import { loadArena } from "@/lib/view";
-import { formatValue } from "@/lib/rating";
+import { formatValue, tierMetal } from "@/lib/rating";
 import { photoUrl } from "@/lib/photo";
 import { teamRecords } from "@/lib/stats";
 import { TEAM_LABEL } from "@/lib/types";
@@ -100,7 +100,7 @@ export default async function ClassificaPage({ searchParams }: { searchParams: P
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className={`font-display text-2xl leading-none ${key === "overall" && r.tier === "silver-rare" ? "text-silver" : "text-gold"}`}>{h.v}</div>
+                  <div className={`font-display text-2xl leading-none ${key !== "overall" || tierMetal(r.tier) === "gold" ? "text-gold" : tierMetal(r.tier) === "silver" ? "text-silver" : "text-[#d49a62]"}`}>{h.v}</div>
                   <div className="text-[10px] uppercase tracking-wider text-muted">{h.l}</div>
                 </div>
               </Link>
@@ -145,7 +145,7 @@ export default async function ClassificaPage({ searchParams }: { searchParams: P
                       <span className="text-xs text-muted">{r.player.position}</span>
                     </Link>
                   </td>
-                  <td className={`px-3 py-2 text-center font-display text-lg ${r.tier === "silver-rare" ? "text-silver" : "text-gold"}`}>{r.overall ?? "–"}</td>
+                  <td className={`px-3 py-2 text-center font-display text-lg ${tierMetal(r.tier) === "gold" ? "text-gold" : tierMetal(r.tier) === "silver" ? "text-silver" : "text-[#d49a62]"}`}>{r.overall ?? "–"}</td>
                   <td className="px-3 py-2 text-center">{formatValue(r.value)}</td>
                   <td className="px-3 py-2 text-center">{s.played}</td>
                   <td className="px-3 py-2 text-center text-teal-light">{s.wins}</td>

@@ -26,13 +26,26 @@ export function tierFor(overall: number | null, settings: Settings): Tier {
   if (overall == null) return "silver-rare";
   if (overall >= settings.goldRareMin) return "gold-rare";
   if (overall >= settings.goldMin) return "gold";
-  return "silver-rare";
+  if (overall >= settings.silverRareMin) return "silver-rare";
+  if (overall >= settings.silverMin) return "silver";
+  if (overall >= settings.bronzeRareMin) return "bronze-rare";
+  return "bronze";
 }
+
+export const TIER_ORDER: Tier[] = ["gold-rare", "gold", "silver-rare", "silver", "bronze-rare", "bronze"];
+/** Metal family of a tier: for colours and labels */
+export function tierMetal(tier: Tier): "gold" | "silver" | "bronze" {
+  return tier.startsWith("gold") ? "gold" : tier.startsWith("silver") ? "silver" : "bronze";
+}
+export const METAL_LABEL = { gold: "Oro", silver: "Argento", bronze: "Bronzo" } as const;
 
 export const TIER_LABEL: Record<Tier, string> = {
   "gold-rare": "Oro Rara",
   gold: "Oro",
   "silver-rare": "Argento Rara",
+  silver: "Argento",
+  "bronze-rare": "Bronzo Rara",
+  bronze: "Bronzo",
 };
 
 /** Market value of the card, FUT-style exponential curve. */

@@ -1,6 +1,6 @@
 export type TeamId = "blacks" | "blancos";
 export type Position = "POR" | "DIF" | "CEN" | "ATT";
-export type Tier = "gold-rare" | "gold" | "silver-rare";
+export type Tier = "gold-rare" | "gold" | "silver-rare" | "silver" | "bronze-rare" | "bronze";
 
 export interface Attrs {
   pac: number;
@@ -93,6 +93,9 @@ export interface PushSub {
 export interface Settings {
   goldRareMin: number;
   goldMin: number;
+  silverRareMin: number;
+  silverMin: number;
+  bronzeRareMin: number;
   votingOpen: boolean;
   seasonName: string;
 }
@@ -111,6 +114,9 @@ export interface DB {
 export const DEFAULT_SETTINGS: Settings = {
   goldRareMin: 80,
   goldMin: 70,
+  silverRareMin: 65,
+  silverMin: 60,
+  bronzeRareMin: 55,
   votingOpen: true,
   seasonName: "Stagione 2026/27",
 };
