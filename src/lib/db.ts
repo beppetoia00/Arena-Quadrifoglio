@@ -13,10 +13,11 @@ export const getDb = cache(async (): Promise<DB> => (await loadRaw()).data);
 export async function mutateDb<T>(fn: (db: DB) => T | Promise<T>): Promise<T> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 5; attempt++) {
-    const { data, etag } = await loadRaw();
+    const { data, etag } = await loadRaw(true);
     const result = await fn(data);
     try {
-      await saveRaw(data, etag);
+      // last attempt: if the ETag keeps mismatching (proxy/encoding quirks), write unconditionally
+      await saveRaw(data, attempt === 4 ? undefined : etag);
       return result;
     } catch (e) {
       lastError = e;

@@ -1,7 +1,7 @@
 import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
-import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
+import { get, head, put, BlobPreconditionFailedError } from "@vercel/blob";
 import { DB, emptyDb } from "./types";
 
 /**
@@ -41,13 +41,26 @@ async function streamToString(stream: ReadableStream<Uint8Array>) {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-export async function loadRaw(): Promise<Loaded> {
+/** Strip the weak-validator prefix some proxies add to compressed responses. */
+function normalizeEtag(etag: string | undefined | null): string | undefined {
+  if (!etag) return undefined;
+  return etag.replace(/^W\//, "");
+}
+
+/**
+ * Load the database. With `forWrite`, the ETag is taken from a `head()` call (the
+ * authoritative value) so that the conditional `put` in saveRaw can succeed.
+ */
+export async function loadRaw(forWrite = false): Promise<Loaded> {
   if (usesBlob()) {
-    const res = await get(DB_PATH, { access: "private", useCache: false });
+    const [res, meta] = await Promise.all([
+      get(DB_PATH, { access: "private", useCache: false, headers: { "accept-encoding": "identity" } }),
+      forWrite ? head(DB_PATH).catch(() => null) : Promise.resolve(null),
+    ]);
     if (!res || !res.stream) return { data: emptyDb() };
     const text = await streamToString(res.stream);
     const data = normalize(JSON.parse(text));
-    return { data, etag: res.blob.etag };
+    return { data, etag: normalizeEtag(meta?.etag) ?? normalizeEtag(res.blob.etag) };
   }
   try {
     const text = await fs.readFile(LOCAL_DB, "utf8");

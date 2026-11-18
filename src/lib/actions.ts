@@ -13,7 +13,7 @@ import {
   setSession,
 } from "./auth";
 import { savePhoto } from "./storage";
-import { Attrs, Lineup, Match, MatchPlayerStat, Player, Position, POSITIONS, TeamId } from "./types";
+import { Attrs, DB, Lineup, Match, MatchPlayerStat, Player, Position, POSITIONS, TeamId } from "./types";
 import { ATTR_KEYS, MAX_OVR, MIN_OVR } from "./rating";
 import { getFormation } from "./formations";
 import { parseBulkLine } from "./bulk";
@@ -25,6 +25,17 @@ const ok = (message?: string): ActionResult => ({ ok: true, message });
 
 function revalidateAll() {
   revalidatePath("/", "layout");
+}
+
+/** Run a mutation and return an error message instead of throwing (server actions would 500). */
+async function tryMutate(fn: (db: DB) => void | Promise<void>): Promise<string | null> {
+  try {
+    await mutateDb(fn);
+    return null;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return msg === "conflict" ? "Troppe scritture contemporanee, riprova tra un attimo" : msg;
+  }
 }
 
 const num = (v: FormDataEntryValue | null, fallback = 0) => {
@@ -89,7 +100,7 @@ export async function submitVoteAction(input: {
       attrs[k] = v;
     }
   }
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     if (!db.settings.votingOpen) throw new Error("Le votazioni sono chiuse");
     if (!db.players.some((p) => p.id === input.playerId)) throw new Error("Giocatore non trovato");
     const existing = db.votes.find((v) => v.voterId === me.id && v.playerId === input.playerId);
@@ -101,9 +112,8 @@ export async function submitVoteAction(input: {
     } else {
       db.votes.push({ voterId: me.id, playerId: input.playerId, overall, attrs, updatedAt: now });
     }
-  }).catch((e: Error) => {
-    throw e;
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok("Voto registrato!");
 }
@@ -125,7 +135,7 @@ export async function createLineupAction(input: {
   if (new Set(chosen).size !== chosen.length) return fail("Un giocatore è presente due volte");
   if (chosen.length < 2) return fail("Scegli almeno qualche giocatore");
   const id = newId("l_");
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     for (const pid of chosen) if (!db.players.some((p) => p.id === pid)) throw new Error("Giocatore non valido");
     const lineup: Lineup = {
       id,
@@ -141,6 +151,7 @@ export async function createLineupAction(input: {
     };
     db.lineups.unshift(lineup);
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return { ok: true, id };
 }
@@ -148,12 +159,13 @@ export async function createLineupAction(input: {
 export async function toggleLineupVoteAction(lineupId: string): Promise<ActionResult> {
   const me = await currentPlayer();
   if (!me) return fail("Entra per votare");
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     const l = db.lineups.find((x) => x.id === lineupId);
     if (!l) throw new Error("Formazione non trovata");
     if (l.votes.includes(me.id)) l.votes = l.votes.filter((v) => v !== me.id);
     else l.votes.push(me.id);
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok();
 }
@@ -161,12 +173,13 @@ export async function toggleLineupVoteAction(lineupId: string): Promise<ActionRe
 export async function deleteLineupAction(lineupId: string): Promise<ActionResult> {
   const me = await currentPlayer();
   const admin = await isAdmin();
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     const l = db.lineups.find((x) => x.id === lineupId);
     if (!l) return;
     if (!admin && l.authorId !== me?.id) throw new Error("Non puoi eliminare questa formazione");
     db.lineups = db.lineups.filter((x) => x.id !== lineupId);
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok();
 }
@@ -177,13 +190,14 @@ export async function voteMvpAction(matchId: string, playerId: string): Promise<
   const me = await currentPlayer();
   if (!me) return fail("Entra per votare l'MVP");
   if (me.id === playerId) return fail("Non puoi votarti MVP da solo 😄");
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     const m = db.matches.find((x) => x.id === matchId);
     if (!m) throw new Error("Partita non trovata");
     if (![...m.blacks, ...m.blancos].includes(playerId)) throw new Error("Il giocatore non ha giocato questa partita");
     m.mvpVotes = m.mvpVotes.filter((v) => v.voterId !== me.id);
     m.mvpVotes.push({ voterId: me.id, playerId });
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok("MVP votato!");
 }
@@ -206,7 +220,7 @@ export async function saveMatchAction(_prev: ActionResult | null, formData: Form
     if (goals || assists) stats.push({ playerId: pid, goals: Math.max(0, goals), assists: Math.max(0, assists) });
   }
   let savedId = id;
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     const existing = id ? db.matches.find((m) => m.id === id) : undefined;
     if (existing) {
       Object.assign(existing, { date, title, notes, blacksScore, blancosScore, blacks, blancos, stats });
@@ -229,15 +243,17 @@ export async function saveMatchAction(_prev: ActionResult | null, formData: Form
     }
     db.matches.sort((a, b) => b.date.localeCompare(a.date));
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   redirect(`/partite/${savedId}`);
 }
 
 export async function deleteMatchAction(matchId: string): Promise<ActionResult> {
   if (!(await isAdmin())) return fail("Solo l'admin");
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     db.matches = db.matches.filter((m) => m.id !== matchId);
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   redirect("/partite");
 }
@@ -272,7 +288,7 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
     photo = await savePhoto(bytes, file.name || "foto.jpg", file.type || "image/jpeg");
   }
 
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     const existing = id ? db.players.find((p) => p.id === id) : undefined;
     if (existing) {
       existing.name = name;
@@ -301,13 +317,14 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
       db.players.push(p);
     }
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok(id ? "Giocatore aggiornato" : "Giocatore aggiunto");
 }
 
 export async function deletePlayerAction(playerId: string): Promise<ActionResult> {
   if (!(await isAdmin())) return fail("Solo l'admin");
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     db.players = db.players.filter((p) => p.id !== playerId);
     db.votes = db.votes.filter((v) => v.playerId !== playerId && v.voterId !== playerId);
     for (const m of db.matches) {
@@ -322,6 +339,7 @@ export async function deletePlayerAction(playerId: string): Promise<ActionResult
       l.votes = l.votes.filter((v) => v !== playerId);
     }
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok("Giocatore eliminato");
 }
@@ -333,18 +351,20 @@ export async function saveSettingsAction(_prev: ActionResult | null, formData: F
   if (goldMin >= goldRareMin) return fail("La soglia Oro deve essere minore della soglia Oro Rara");
   const votingOpen = str(formData.get("votingOpen")) === "1";
   const seasonName = str(formData.get("seasonName")) || "Stagione";
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     db.settings = { goldRareMin, goldMin, votingOpen, seasonName };
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok("Impostazioni salvate");
 }
 
 export async function resetVotesAction(): Promise<ActionResult> {
   if (!(await isAdmin())) return fail("Solo l'admin");
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     db.votes = [];
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok("Voti azzerati");
 }
@@ -358,7 +378,7 @@ export async function bulkImportAction(_prev: ActionResult | null, formData: For
   if (!parsed.length) return fail("Nessun giocatore trovato nel testo");
   let added = 0;
   let updated = 0;
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     for (const row of parsed) {
       const existing = db.players.find((p) => p.name.toLowerCase() === row.name.toLowerCase());
       if (existing) {
@@ -380,6 +400,7 @@ export async function bulkImportAction(_prev: ActionResult | null, formData: For
       added++;
     }
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok(`${added} giocatori aggiunti, ${updated} aggiornati`);
 }
@@ -398,7 +419,7 @@ export async function seedDemoAction(): Promise<ActionResult> {
     { name: "Matteo", position: "DIF", team: "blancos" },
     { name: "Giovanni", position: "POR", team: "blancos" },
   ];
-  await mutateDb((db) => {
+  const mErr = await tryMutate((db) => {
     if (db.players.length) throw new Error("Ci sono già giocatori: demo non caricata");
     db.players = demo.map((d, i) => ({
       id: newId("p_") + i,
@@ -423,6 +444,7 @@ export async function seedDemoAction(): Promise<ActionResult> {
       }
     }
   });
+  if (mErr) return fail(mErr);
   revalidateAll();
   return ok("Dati demo caricati (PIN di tutti: 1234)");
 }
