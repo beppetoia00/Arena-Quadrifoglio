@@ -505,6 +505,16 @@ export async function unsubscribePushAction(endpoint: string): Promise<ActionRes
   return ok("Notifiche disattivate");
 }
 
+export async function broadcastPushAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  if (!(await isManager())) return fail("Solo l'admin e i capitani");
+  const title = str(formData.get("title")) || "Arena Quadrifoglio";
+  const body = str(formData.get("body"));
+  if (!body) return fail("Scrivi un messaggio");
+  const db = await getDb();
+  const res = await notifyPlayers(db, () => ({ title: title.slice(0, 60), body: body.slice(0, 200), url: str(formData.get("url")) || "/" }));
+  return ok(`Inviato a ${res.sent} dispositivi${res.failed ? `, ${res.failed} falliti` : ""}`);
+}
+
 export async function testPushAction(): Promise<ActionResult> {
   const me = await currentPlayer();
   if (!me) return fail("Entra prima");

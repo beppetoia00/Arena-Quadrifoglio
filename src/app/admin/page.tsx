@@ -8,6 +8,8 @@ import { PlayersTable } from "@/components/admin/PlayersTable";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { DangerZone } from "@/components/admin/DangerZone";
 import { BulkImport } from "@/components/admin/BulkImport";
+import { BroadcastForm } from "@/components/admin/BroadcastForm";
+import { pushConfigured } from "@/lib/push";
 import { adminLogoutAction } from "@/lib/actions";
 
 export const metadata = { title: "Admin" };
@@ -81,6 +83,21 @@ export default async function AdminPage() {
           <h2 className="mb-3 font-display text-xl uppercase tracking-wider">Impostazioni</h2>
           <SettingsForm settings={db.settings} />
         </div>
+      </section>
+
+      <section className="card-panel">
+        <h2 className="mb-1 font-display text-xl uppercase tracking-wider">Notifiche push</h2>
+        <p className="mb-3 text-sm text-muted">
+          {pushConfigured() ? "✅ Chiavi configurate" : "⚠️ Chiavi VAPID mancanti (NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY)"} · {db.pushSubs.length} {db.pushSubs.length === 1 ? "dispositivo iscritto" : "dispositivi iscritti"}
+          {db.pushSubs.length > 0 && (
+            <>
+              {" "}
+              (
+              {[...new Set(db.pushSubs.map((s) => db.players.find((p) => p.id === s.playerId)?.name ?? "?"))].join(", ")})
+            </>
+          )}
+        </p>
+        <BroadcastForm />
       </section>
 
       <DangerZone hasPlayers={db.players.length > 0} votes={db.votes.length} />
